@@ -1,0 +1,9 @@
+version: "3.9"
+
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      SQLALCHEMY_DATABASE_URL: "postgresql+psycopg2://cloud_user:dw489U%26kvink@frodokatarn.beget.app/notes_db"
