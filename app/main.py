@@ -10,9 +10,9 @@ app = FastAPI()
 database.create_tables_if_not_exists(database.engine)
 
 
-@app.post("/register")
+@app.post("/register") #регистрация
 async def register(form: RegisterForm, db: Session = Depends(database.get_db)) -> dict:
-    # Проверка, существует ли уже пользователь с таким именем или email
+    # Проверка, существует ли уже пользователь с таким именем
     existing_user = crud.get_user_by_username_or_email(db, form.username)
     if existing_user:
         raise HTTPException(status_code=400, detail="Пользователь с таким именем уже существует")
@@ -25,7 +25,7 @@ async def register(form: RegisterForm, db: Session = Depends(database.get_db)) -
     return {"message": "Пользователь успешно зарегистрирован"}
 
 
-@app.post("/login")
+@app.post("/login") #аутентификация, выдача токена
 async def login(form: LoginForm, db: Session=Depends(database.get_db)) -> dict:
     user = auth.authenticate_user(db, form.username, form.password)
     if not user:
@@ -34,7 +34,7 @@ async def login(form: LoginForm, db: Session=Depends(database.get_db)) -> dict:
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@app.post("/notes/")
+@app.post("/notes/") #создание заметки
 async def create_note(note: NoteCreate, db: Session=Depends(database.get_db), cur_user: User=Depends(auth.get_current_user)) -> dict:
     spelling_errors = speller.check_spelling(note.body)
     if spelling_errors:
@@ -42,10 +42,10 @@ async def create_note(note: NoteCreate, db: Session=Depends(database.get_db), cu
     return crud.create_note(db=db, note=note, user_id=cur_user.id)
 
 
-@app.get("/notes/")
+@app.get("/notes/") #получение списка заметок
 async def read_notes(db: Session = Depends(database.get_db), current_user: User = Depends(auth.get_current_user)) -> responses.JSONResponse:
     notes = crud.get_notes(db, user_id=current_user.id)
-    # Преобразуем кортежи в словари
+    # Преобразуем кортежи в словари, в конечном итоге будет список из заметок, представленных в виде словаря, где ключ - заголовок, значение - тело
     notes_dict = [{"title": title, "body": body} for title, body in notes]
     return responses.JSONResponse(content={"notes": notes_dict})
 
