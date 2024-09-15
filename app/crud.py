@@ -33,5 +33,25 @@ def create_note(db: Session, note: schemas.NoteCreate, user_id: int) -> Dict[str
 
 
 def get_notes(db: Session, user_id: int) -> List[Dict[str, str]]:
-    notes = db.query(models.Note.title, models.Note.body).filter(models.Note.owner_id == user_id).all()
+    notes = db.query(models.Note.id, models.Note.title, models.Note.body).filter(models.Note.owner_id == user_id).all()
     return notes
+
+
+def delete_note(db: Session, note_id: int, user_id: int):
+    note = db.query(models.Note).filter(models.Note.id == note_id, models.Note.owner_id == user_id).first()
+    if note:
+        db.delete(note)
+        db.commit()
+        return True
+    return False
+
+
+def update_note(db: Session, note_id: int, user_id: int, updated_note: schemas.NoteCreate) -> Optional[Dict[str, str]]:
+    note = db.query(models.Note).filter(models.Note.id == note_id, models.Note.owner_id == user_id).first()
+    if note:
+        note.title = updated_note.title
+        note.body = updated_note.body
+        db.commit()
+        db.refresh(note)
+        return {"title": note.title, "body": note.body}
+    return None

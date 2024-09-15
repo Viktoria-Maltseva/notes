@@ -46,8 +46,24 @@ async def create_note(note: NoteCreate, db: Session=Depends(database.get_db), cu
 async def read_notes(db: Session = Depends(database.get_db), current_user: User = Depends(auth.get_current_user)) -> responses.JSONResponse:
     notes = crud.get_notes(db, user_id=current_user.id)
     # Преобразуем кортежи в словари, в конечном итоге будет список из заметок, представленных в виде словаря, где ключ - заголовок, значение - тело
-    notes_dict = [{"title": title, "body": body} for title, body in notes]
+    notes_dict = [{"id": id, "title": title, "body": body} for id, title, body in notes]
     return responses.JSONResponse(content={"notes": notes_dict})
+
+
+@app.delete("/notes/{note_id}")  # Удаление заметки
+async def delete_note(note_id: int, db: Session = Depends(database.get_db), current_user: User = Depends(auth.get_current_user)) -> dict:
+    result = crud.delete_note(db=db, note_id=note_id, user_id=current_user.id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Заметка не найдена или доступ запрещен")
+    return {"message": "Заметка успешно удалена"}
+
+
+@app.put("/notes/{note_id}")  # Обновление заметки
+async def update_note(note_id: int, note: NoteCreate, db: Session = Depends(database.get_db), current_user: User = Depends(auth.get_current_user)) -> dict:
+    updated_note = crud.update_note(db=db, note_id=note_id, user_id=current_user.id, updated_note=note)
+    if not updated_note:
+        raise HTTPException(status_code=404, detail="Заметка не найдена или доступ запрещен")
+    return {"message": "Заметка успешно обновлена", "note": updated_note}
 
 
 if __name__ == "__main__":
